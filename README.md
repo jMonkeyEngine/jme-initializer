@@ -58,6 +58,7 @@ See the folder jmetemplate, fundamentally that is what ends up in the zip, but:
   * E.g. [IF=JME_ANDROID]Android module :app : holds build.gradle for the android dependencies & implements the :game module, this module can hold android dependent gui.[/IF=JME_ANDROID]
   * These can be nested, and can be multiline
 * [DOT] is replaced by ".". This is supported because files starting with a . (like .gitignore) don't get into the jar, so don't get into the template
+* [NOT=????] work exactly like [IF=????] but the inverted.
 
 Additionally, optionally, you can end any file .jmetemplate. This has no actual function, but it is stripped from the 
 output file name. Its purpose is to stop IDEs from trying to do error highlighting on known file types (e.g. gradle files)
