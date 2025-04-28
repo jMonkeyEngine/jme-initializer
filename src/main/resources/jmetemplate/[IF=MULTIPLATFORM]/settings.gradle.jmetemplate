@@ -1,13 +1,6 @@
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-        jcenter() // Warning: this repository is going to shut down soon
-    }
-}
 rootProject.name = "[GAME_NAME]"
 [IF=JME_DESKTOP]include ':desktop'[/IF=JME_DESKTOP]
 [IF=JME_ANDROID]include ':app'[/IF=JME_ANDROID]
+[IF=JME_IOSMOE]include ':ios-moe'[/IF=JME_IOSMOE]
 [IF=JME_VR]include ':vrdesktop'[/IF=JME_VR]
 include ':game'

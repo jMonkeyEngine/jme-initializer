@@ -1,0 +1,3 @@
+rootProject.name = "[GAME_NAME]"
+include ':ios-moe'
+

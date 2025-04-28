@@ -1,0 +1,69 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.multi-os-engine:moe-gradle:$multiOsEngineVersion"
+  }
+}
+
+apply plugin: 'moe'
+
+// Exclude all files from Gradle's test runner
+test { exclude '**' }
+
+// Copy all xcframeworks to xcode/native/ios
+// They need to be picked up from there for linking in XCode
+task copyNatives  {
+  doLast {
+    file("xcode/native/ios/").mkdirs();
+    def subDir = "META-INF/robovm/ios/libs/"
+    configurations.natives.files.each { jar ->
+      copy {
+        from zipTree(jar)
+        include "$subDir/*.xcframework/**"
+        into("xcode/native/ios/")
+        eachFile { file ->
+          file.path = file.path.replaceFirst("^$subDir", '')
+        }
+        includeEmptyDirs(false)
+      }
+    }
+
+    def LD_FLAGS = ""
+    def outFlags = file("xcode/ios-moe/custom.xcconfig");
+    outFlags.write LD_FLAGS
+
+    def proguard = file("proguard.append.cfg")
+  }
+}
+
+configurations { natives }
+
+ext.jmonkeyengineVersion = '[JME_VERSION]'
+
+dependencies {
+  implementation project(':game')
+
+  implementation "org.jmonkeyengine:jme3-ios:" + jmonkeyengineVersion
+  natives "org.jmonkeyengine:jme3-ios-native:" + jmonkeyengineVersion
+}
+
+// Setup Multi-OS Engine
+moe {
+  xcode {
+    project 'xcode/ios-moe.xcodeproj'
+    mainTarget 'ios-moe'
+    testTarget 'ios-moe-Test'
+  }
+}
+
+moeMainReleaseIphoneosXcodeBuild.dependsOn copyNatives
+moeMainDebugIphoneosXcodeBuild.dependsOn copyNatives
+moeMainReleaseIphonesimulatorXcodeBuild.dependsOn copyNatives
+moeMainDebugIphonesimulatorXcodeBuild.dependsOn copyNatives
+
+if (System.getenv('PLATFORM_NAME') != null) {
+  moeXcodeInternal.dependsOn copyNatives
+}
+

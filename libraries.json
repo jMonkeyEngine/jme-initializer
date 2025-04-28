@@ -24,6 +24,14 @@
     "artifacts" : [ { "groupId" : "org.jmonkeyengine", "artifactId" : "jme3-android" } ]
   },
   {
+    "key": "JME_IOSMOE",
+    "displayName": "JME iOS using Multi-OS-Engine",
+    "category" : "JME_PLATFORM",
+    "descriptionText" : "iOS Multi-OS-Engine Game development",
+    "usesJmeVersion" : true,
+    "artifacts" : [ { "groupId" : "org.jmonkeyengine", "artifactId" : "jme3-ios" } ]
+  },
+  {
   "key": "JME_EFFECTS",
   "displayName": "JME Effects",
   "category" : "JME_GENERAL",
