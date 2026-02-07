@@ -33,7 +33,7 @@ class ReactGameForm extends React.Component {
                 let stateUpdate = {
                     availableLibraryData: data,
                     freeSelectLibraries:data.defaultSelectedFreeChoiceLibraries,
-                    platformLibraries:[data.defaultPlatform]
+                    platformLibraries:data.defaultPlatform
                 };
                 //add defaults (if available) for the groupSelectedLibraries
                 let groupSelectedLibraries = {};
@@ -280,13 +280,13 @@ class ReactGameForm extends React.Component {
         const requiredPlatformStrings = [];
         this.state.availableLibraryData.jmePlatforms.forEach(platform => {
             if (requiredPlatformList.includes(platform.key)){
-                requiredPlatformStrings.push(platform.libraryName);
+                requiredPlatformStrings.push(platform.platformName);
             }
         });
         const incompatiblePlatformStrings = [];
         this.state.availableLibraryData.jmePlatforms.forEach(platform => {
             if (incompatiblePlatformList.includes(platform.key)){
-                incompatiblePlatformStrings.push(platform.libraryName);
+                incompatiblePlatformStrings.push(platform.platformName);
             }
         });
         this.state.availableLibraryData.deploymentOptions.forEach(deploymentOption => {
@@ -316,8 +316,8 @@ class ReactGameForm extends React.Component {
                 platformCheckboxes.push(<div className="form-check" key = {"platformRadioDiv" + platform.key}>
                     <input className="form-check-input" type="checkbox" name="platformRadios" id={"platformRadio" + platform.key} value={platform.key} checked = {this.state.platformLibraries.includes(platform.key)} onChange={event => this.handleTogglePlatformLibrary(platform.key)} />
                     <label className="form-check-label" htmlFor={"platformRadio" + platform.key}>
-                        <b>{platform.libraryName}</b>
-                        <p>{platform.libraryDescription}</p>
+                        <b>{platform.platformName}</b>
+                        <p>{platform.platformDescription}</p>
                     </label>
                 </div>);
 

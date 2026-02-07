@@ -1,8 +1,8 @@
 [IF=WINDOWS|LINUX|MACOS]
-//See https://api.adoptium.net/v3/assets/feature_releases/11/ga?image_type=jre for jre urls
-[IF=WINDOWS]def windowsJreUrl = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.6%2B10/OpenJDK17U-jre_x64_windows_hotspot_17.0.6_10.zip"[/IF=WINDOWS]
-[IF=LINUX]def linuxJreUrl = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.6%2B10/OpenJDK17U-jre_x64_linux_hotspot_17.0.6_10.tar.gz"[/IF=LINUX]
-[IF=MACOS]def macJreUrl = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.6%2B10/OpenJDK17U-jre_x64_mac_hotspot_17.0.6_10.tar.gz"[/IF=MACOS]
+//See https://api.adoptium.net/v3/assets/feature_releases/21/ga?image_type=jre for jre urls
+[IF=WINDOWS]def windowsJreUrl = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jre_x64_windows_hotspot_21.0.10_7.zip"[/IF=WINDOWS]
+[IF=LINUX]def linuxJreUrl = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jre_x64_linux_hotspot_21.0.10_7.tar.gz"[/IF=LINUX]
+[IF=MACOS]def macJreUrl = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.10_7.tar.gz"[/IF=MACOS]
 
 [IF=WINDOWS]
 task downloadWindowsJre(type: Download) {

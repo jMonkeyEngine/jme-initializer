@@ -1,0 +1,20 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        [MAVEN_REPOS]
+    }
+}
+rootProject.name = "[GAME_NAME]"
+[IF=DESKTOP]include ':desktop'[/IF=DESKTOP]
+[IF=ANDROID]include ':app'[/IF=ANDROID]
+[IF=PC_VR]include ':pc-vr'[/IF=PC_VR]
+[IF=ANDROID_VR]include ':android-vr'[/IF=ANDROID_VR]
+include ':game'

@@ -14,11 +14,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.jmonkeyengine.jmeinitializer.libraries.Artifact;
+import com.jmonkeyengine.jmeinitializer.libraries.JmePlatform;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
 
 import com.jmonkeyengine.jmeinitializer.libraries.Library;
-import com.jmonkeyengine.jmeinitializer.libraries.LibraryCategory;
 import com.jmonkeyengine.jmeinitializer.libraries.LibraryService;
 
 /**
@@ -45,17 +46,17 @@ import com.jmonkeyengine.jmeinitializer.libraries.LibraryService;
 public class Merger {
 
     //the "anything but = is to avoid double ifs merging
-    private Pattern mergeIfConditionPattern = Pattern.compile("\\[IF=([^\\]]*)]");
+    private final Pattern mergeIfConditionPattern = Pattern.compile("\\[IF=([^\\]]*)]");
 
     //the "anything but = is to avoid double nots merging
-    private Pattern mergeNotConditionPattern = Pattern.compile("\\[NOT=([^\\]]*)]");
+    private final Pattern mergeNotConditionPattern = Pattern.compile("\\[NOT=([^\\]]*)]");
 
-    private Pattern fragmentPattern = Pattern.compile("\\[FRAGMENT=([a-zA-Z0-9./]*)]");
+    private final Pattern fragmentPattern = Pattern.compile("\\[FRAGMENT=([a-zA-Z0-9./]*)]");
 
     /**
      * After the allowed ifs have been processed this is used to eliminate forbidden ifs
      */
-    private Pattern mergeIfInFileEliminationPattern = Pattern.compile("\\[IF=([^=]*)]");
+    private final Pattern mergeIfInFileEliminationPattern = Pattern.compile("\\[IF=([^=]*)]");
 
     private final Map<MergeField, String> mergeData = new HashMap<>();
 
@@ -72,28 +73,28 @@ public class Merger {
      *
      * fragmentSupplier supplies other file's contents to add into the merged template
      */
-    public Merger(String gameName, String gamePackage, List<Library> librariesRequired, Collection<String> additionalProfiles, String jmeVersion, Map<String,String> libraryVersions, Function<String, String> fragmentSupplier){
+    public Merger(String gameName, String proposedPackage, Collection<JmePlatform> requiredPlatforms, Collection<Library> librariesRequired, Collection<String> additionalProfiles, String jmeVersion, Map<String,String> libraryVersions, Function<String, String> fragmentSupplier){
         mergeData.put(MergeField.GAME_NAME_FULL, gameName);
         mergeData.put(MergeField.GAME_NAME, sanitiseToJavaClass(gameName));
 
-        String proposedPackage = sanitiseToPackage(gamePackage);
-        if (proposedPackage.isBlank()){
-            proposedPackage = sanitiseToPackage(mergeData.get(MergeField.GAME_NAME));
-        }
-        mergeData.put(MergeField.GAME_PACKAGE, proposedPackage);
+        String gamePackage = sanitiseToPackage(proposedPackage, gameName);
+
+        mergeData.put(MergeField.GAME_PACKAGE, gamePackage);
         mergeData.put(MergeField.GAME_PACKAGE_FOLDER, convertPackageToFolder(mergeData.get(MergeField.GAME_PACKAGE)));
         mergeData.put(MergeField.JME_VERSION, jmeVersion);
-        mergeData.put(MergeField.JME_DEPENDENCIES, formJmeRequiredLibrariesMergeField(librariesRequired));
-        mergeData.put(MergeField.VR_SPECIALISED_DEPENDENCIES, formPlatformSpecialisedLibrariesMergeField(librariesRequired, libraryVersions, LibraryService.JME_VR));
-        mergeData.put(MergeField.ANDROID_SPECIALISED_DEPENDENCIES, formPlatformSpecialisedLibrariesMergeField(librariesRequired, libraryVersions, LibraryService.JME_ANDROID));
-        mergeData.put(MergeField.DESKTOP_SPECIALISED_DEPENDENCIES, formPlatformSpecialisedLibrariesMergeField(librariesRequired, libraryVersions, LibraryService.JME_DESKTOP));
-        mergeData.put(MergeField.ALL_NON_JME_NON_SPECIALISED_DEPENDENCIES, formNonJmeNonSpecialised(librariesRequired, libraryVersions));
-        mergeData.put(MergeField.ALL_NON_JME_DEPENDENCIES, eliminateEmptyLines(mergeData.get(MergeField.VR_SPECIALISED_DEPENDENCIES)+"\n"+mergeData.get(MergeField.ANDROID_SPECIALISED_DEPENDENCIES)+"\n"+mergeData.get(MergeField.DESKTOP_SPECIALISED_DEPENDENCIES)+"\n"+mergeData.get(MergeField.ALL_NON_JME_NON_SPECIALISED_DEPENDENCIES)));
+        mergeData.put(MergeField.ALL_NON_JME_VERSION_REFERENCES, formTomlVersionKeys(librariesRequired, libraryVersions));
+        mergeData.put(MergeField.ALL_NON_JME_TOML_LIBRARY_REFERENCES, formTomlLibraryKeys(librariesRequired, libraryVersions));
+
+        mergeData.put(MergeField.VR_SPECIALISED_DEPENDENCIES, formPlatformSpecialisedLibrariesMergeField(librariesRequired, libraryVersions, JmePlatform.PC_VR));
+        mergeData.put(MergeField.ANDROID_SPECIALISED_DEPENDENCIES, formPlatformSpecialisedLibrariesMergeField(librariesRequired, libraryVersions, JmePlatform.ANDROID));
+        mergeData.put(MergeField.DESKTOP_SPECIALISED_DEPENDENCIES, formPlatformSpecialisedLibrariesMergeField(librariesRequired, libraryVersions, JmePlatform.DESKTOP));
+        mergeData.put(MergeField.ALL_NON_JME_NON_SPECIALISED_DEPENDENCIES, formNonJmeNonSpecialised(librariesRequired));
         mergeData.put(MergeField.MAVEN_REPOS, formMavenRepos(librariesRequired));
-        mergeData.put(MergeField.CSV_LIBRARIES, csvLibraires(librariesRequired));
+        mergeData.put(MergeField.TAMARIN_VERSION, libraryVersions.get("com.onemillionworlds:tamarin"));
 
         libraryKeysAndProfilesInUse = librariesRequired.stream().map(Library::getKey).collect(Collectors.toSet());
         libraryKeysAndProfilesInUse.addAll(additionalProfiles);
+        libraryKeysAndProfilesInUse.addAll(requiredPlatforms.stream().map(JmePlatform::name).collect(Collectors.toSet()));
 
         this.fragmentSupplier = fragmentSupplier;
     }
@@ -125,7 +126,9 @@ public class Merger {
     public String mergePath (String pathTemplate){
         String path = pathTemplate;
         for(Map.Entry<MergeField, String> merges : mergeData.entrySet()){
-            path = path.replace(merges.getKey().getMergeFieldInText(), merges.getValue());
+            if(merges.getValue()!=null) {
+                path = path.replace(merges.getKey().getMergeFieldInText(), merges.getValue());
+            }
         }
         //any "ifs" are removed from the path (they should have already been used to assess if the file should be included
         path = path.replaceAll("\\[IF=([^=]*)]", "");
@@ -266,34 +269,23 @@ public class Merger {
         return false;
     }
 
-    protected static String formJmeRequiredLibrariesMergeField(List<Library> librariesRequired){
+    protected static String formNonJmeNonSpecialised(Collection<Library> librariesRequired){
         return librariesRequired.stream()
-                .filter(Library::isUsesJmeVersion)
-                .filter(l -> l.getCategory() != LibraryCategory.JME_PLATFORM) //platforms are hard coded into the templates to better support multimodule
-                .flatMap(l ->
-                    l.getArtifacts().stream()
-                            .map(artifact -> "implementation '" + artifact.getGroupId() + ":" + artifact.getArtifactId() + ":' + " + artifact.getPinVersionOpt().map(pv -> "'" + pv + "'").orElse( "jmonkeyengineVersion") )
-                ).collect(Collectors.joining("\n"));
-
-    }
-
-    protected static String formNonJmeNonSpecialised(List<Library> librariesRequired, Map<String,String> libraryVersions){
-        return librariesRequired.stream()
-                .filter(l -> !l.isUsesJmeVersion())
+                .filter(l -> !l.isUsesJmeVersion() && !l.getKey().equals("TAMARIN"))
                 .filter(l -> l.getSpecialisedToPlatforms().isEmpty())
                 .flatMap(l ->
                         l.getArtifacts().stream()
                                 .map(artifact -> {
-                                    String mavenCoordinate = artifact.getGroupId() + ":" + artifact.getArtifactId();
-                                    return "implementation '" + mavenCoordinate + ":" + artifact.getPinVersionOpt().orElse(libraryVersions.getOrDefault(mavenCoordinate, artifact.getFallbackVersion()))  + "'";
+                                    return "api libs." + variableNameForArtifactInBuildDotGradle(l, artifact, librariesRequired);
                                 })
                 ).collect(Collectors.joining("\n"));
     }
 
-    protected static String formMavenRepos(List<Library> librariesRequired){
+    protected static String formMavenRepos(Collection<Library> librariesRequired){
         Set<String> mavenRepos = new HashSet<>();
         mavenRepos.add("mavenCentral()");
         mavenRepos.add("mavenLocal()");
+        mavenRepos.add("google()");
 
         librariesRequired.forEach(l -> mavenRepos.addAll(l.getAdditionalMavenRepos()));
 
@@ -302,44 +294,73 @@ public class Merger {
                 .collect(Collectors.joining("\n"));
     }
 
-    public static String csvLibraires(List<Library> librariesRequired){
-        StringBuilder sb=new StringBuilder();
-        for(Library l:librariesRequired){
-            String key=l.getKey();
-            if(sb.length()!=0)sb.append(",");
-            try{
-                sb.append(URLEncoder.encode(key,"UTF-8"));
-            }catch(UnsupportedEncodingException e){
-                e.printStackTrace();
-            }            
-        }
-        
-        return sb.toString();
 
-    }
-
-    protected static String formPlatformSpecialisedLibrariesMergeField(List<Library> librariesRequired, Map<String,String> libraryVersions, String platform){
+    protected static String formPlatformSpecialisedLibrariesMergeField(Collection<Library> librariesRequired, Map<String,String> libraryVersions, JmePlatform platform){
         return librariesRequired.stream()
-                .filter(l -> !l.isUsesJmeVersion())
-                .filter(l -> l.getSpecialisedToPlatforms().contains(platform))
+                .filter(l -> !l.isUsesJmeVersion() && !l.getKey().equals("TAMARIN"))
+                .filter(l -> l.getSpecialisedToPlatforms().contains(platform.name()) ||  l.getSpecialisedToPlatforms().contains(platform.getAlsoKnownAs()))
                 .flatMap(l ->
                         l.getArtifacts().stream()
                                 .map(artifact -> {
-                                    String mavenCoordinate = artifact.getGroupId() + ":" + artifact.getArtifactId();
-                                    return "implementation '" + mavenCoordinate + ":" + artifact.getPinVersionOpt().orElse(libraryVersions.getOrDefault(mavenCoordinate, artifact.getFallbackVersion()))  + "'";
+                                    return "api libs." + variableNameForArtifactInBuildDotGradle(l, artifact, librariesRequired);
                                 })
                 ).collect(Collectors.joining("\n"));
     }
 
-    protected static String sanitiseToPackage(String proposedPackage){
-        proposedPackage = proposedPackage.toLowerCase();
-        proposedPackage = proposedPackage.replace(" ", ".");
-        proposedPackage = proposedPackage.replaceAll("\\.\\.+", "."); //remove double dots or similar
-        proposedPackage = proposedPackage.replaceAll("\\.$", ""); //remove trailing dots
-        proposedPackage = proposedPackage.replaceAll("^\\.", ""); //remove prefix dots
-        proposedPackage = proposedPackage.replaceAll("[^a-z.]", "");//remove illegal characters
+    protected static String formTomlVersionKeys(Collection<Library> librariesRequired, Map<String,String> libraryVersions){
+        StringBuilder sb=new StringBuilder();
 
-        return proposedPackage;
+        for(Library library:librariesRequired){
+            if(!library.isUsesJmeVersion() && !library.getKey().equals("TAMARIN")) {
+                // needs to be artifact
+                for (Artifact artifact : library.getArtifacts()) {
+                    String variableName = variableNameForArtifactInToml(library, artifact, librariesRequired);
+                    String version = libraryVersions.get(artifact.getGroupId() + ":" + artifact.getArtifactId());
+                    sb.append(variableName).append(" = '").append(version).append("'\n");
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    protected static String formTomlLibraryKeys(Collection<Library> librariesRequired, Map<String,String> libraryVersions){
+        StringBuilder sb=new StringBuilder();
+
+        for(Library library:librariesRequired){
+
+            for(Artifact artifact:library.getArtifacts()){
+                if(!library.isUsesJmeVersion() && !library.getKey().equals("TAMARIN")) {
+                    String artifactVariableName = variableNameForArtifactInToml(library, artifact, librariesRequired);
+                    sb.append(artifactVariableName)
+                            .append(" = { module = '")
+                            .append(artifact.getGroupId())
+                            .append(":")
+                            .append(artifact.getArtifactId())
+                            .append("', version.ref ='")
+                            .append(artifactVariableName)
+                            .append("' }\n");
+                }
+            }
+
+        }
+        return sb.toString();
+    }
+
+    protected static String sanitiseToPackage(String proposedPackage, String proposedGameName){
+        String gamePackage = proposedPackage;
+        String sanitisedGameName = sanitiseToJavaClass(proposedGameName).toLowerCase();
+        if(!gamePackage.toLowerCase().contains(sanitisedGameName)){
+            gamePackage = gamePackage + "." + sanitisedGameName;
+        }
+
+        gamePackage = gamePackage.toLowerCase();
+        gamePackage = gamePackage.replace(" ", ".");
+        gamePackage = gamePackage.replaceAll("\\.\\.+", "."); //remove double dots or similar
+        gamePackage = gamePackage.replaceAll("\\.$", ""); //remove trailing dots
+        gamePackage = gamePackage.replaceAll("^\\.", ""); //remove prefix dots
+        gamePackage = gamePackage.replaceAll("[^a-z.]", "");//remove illegal characters
+
+        return gamePackage;
     }
 
     protected static String convertPackageToFolder(String fullPackage){
@@ -368,6 +389,28 @@ public class Merger {
 
     public static String eliminateEmptyLines(String input){
         return input.lines().filter(l -> !l.isBlank()).collect(Collectors.joining("\n"));
+    }
+
+    private static String variableNameForArtifactInToml(Library library, Artifact artifact, Collection<Library> allLibrariesForDedupe){
+        String artifactId = artifact.getArtifactId().toLowerCase();
+        boolean anyDupes = allLibrariesForDedupe
+                .stream()
+                .flatMap(l -> l.getArtifacts().stream())
+                .anyMatch(a -> a!= artifact && a.getArtifactId().equals(artifactId));
+
+
+        String deduped;
+        if(anyDupes){
+            deduped = (artifact.getGroupId() + "-" + artifactId);
+        } else{
+            deduped = artifactId;
+        }
+
+        deduped = deduped.replaceAll("[^a-zA-Z0-9]", "-");
+        return deduped.toLowerCase();
+    }
+    private static String variableNameForArtifactInBuildDotGradle(Library library, Artifact artifact, Collection<Library> allLibrariesForDedupe){
+        return variableNameForArtifactInToml(library, artifact, allLibrariesForDedupe).replace("-", ".");
     }
 
 }

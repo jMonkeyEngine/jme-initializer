@@ -1,5 +1,6 @@
 package com.jmonkeyengine.jmeinitializer;
 
+import com.jmonkeyengine.jmeinitializer.libraries.JmePlatform;
 import com.jmonkeyengine.jmeinitializer.libraries.Library;
 import com.jmonkeyengine.jmeinitializer.libraries.LibraryCategory;
 import com.jmonkeyengine.jmeinitializer.libraries.LibraryService;
@@ -22,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,8 +65,9 @@ public class InitializerZipService {
     }
 
     public Map<String, String> produceGradleFilePreview(String gameName, String packageName, List<String> requiredLibraryKeys, List<String> deploymentOptionKeys ){
-        List<Library> requiredLibraries = eliminateLibrariesOnUnsupportedPlatforms(parseLibraryKeys(requiredLibraryKeys));
-        Merger merger = new Merger(gameName, packageName, requiredLibraries,  calculateAdditionalProfiles(requiredLibraries, deploymentOptionKeys), versionService.getJmeVersion(), versionService.getVersionCache(), new FragmentFetcher() );
+        Collection<JmePlatform> requiredPlatforms = parsePlatforms(requiredLibraryKeys);
+        Collection<Library> requiredLibraries = eliminateLibrariesOnUnsupportedPlatforms(requiredPlatforms, parseLibraryKeys(requiredLibraryKeys));
+        Merger merger = new Merger(gameName, packageName, requiredPlatforms, requiredLibraries,  calculateAdditionalProfiles(requiredLibraries, deploymentOptionKeys), versionService.getJmeVersion(), versionService.getVersionCache(), new FragmentFetcher() );
 
         Map<String, String> gradleFiles = new HashMap<>();
 
@@ -112,9 +115,14 @@ public class InitializerZipService {
      */
     public Map<String,byte[]> produceTemplate(String gameName, String packageName, List<String> requiredLibraryKeys, List<String> deploymentOptionKeys){
 
-        List<Library> requiredLibraries = eliminateLibrariesOnUnsupportedPlatforms(parseLibraryKeys(requiredLibraryKeys));
+        Collection<JmePlatform> requiredPlatforms = parsePlatforms(requiredLibraryKeys);
+        if(requiredPlatforms.isEmpty()){
+            throw new RuntimeException("No platforms were selected");
+        }
 
-        Merger merger = new Merger(gameName, packageName, requiredLibraries, calculateAdditionalProfiles(requiredLibraries, deploymentOptionKeys), versionService.getJmeVersion(), versionService.getVersionCache(), new FragmentFetcher() );
+        Collection<Library> requiredLibraries = eliminateLibrariesOnUnsupportedPlatforms(requiredPlatforms, parseLibraryKeys(requiredLibraryKeys));
+
+        Merger merger = new Merger(gameName, packageName, requiredPlatforms, requiredLibraries, calculateAdditionalProfiles(requiredLibraries, deploymentOptionKeys), versionService.getJmeVersion(), versionService.getVersionCache(), new FragmentFetcher() );
 
         Map<String,byte[]> templateFiles = new HashMap<>();
 
@@ -167,29 +175,47 @@ public class InitializerZipService {
         return templateFiles;
     }
 
-    private List<Library> parseLibraryKeys(List<String> requiredLibraryKeys){
+    private List<JmePlatform> parsePlatforms(List<String> requiredLibraryKeys) {
+        List<JmePlatform> platforms = new ArrayList<>();
+        for(String requiredLibraryKey : requiredLibraryKeys){
+            try {
+                platforms.add(JmePlatform.valueOf(requiredLibraryKey));
+            }catch(IllegalArgumentException e){
+                // this is fine, just a non-platform library
+            }
+        }
+        return platforms;
+    }
+
+    private Collection<Library> parseLibraryKeys(List<String> requiredLibraryKeys){
         return requiredLibraryKeys
                 .stream()
                 .flatMap(lk -> libraryService.getLibraryFromKey(lk).stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**
      * Given a raw list of libraries eliminates any who's required platform requirements aren't met
-     * @param unfilteredList
-     * @return
+     * @param requiredPlatforms the platforms that the user has requested
+     * @param unfilteredList the raw list of libraries
      */
-    private List<Library> eliminateLibrariesOnUnsupportedPlatforms(List<Library> unfilteredList){
-        List<Library> filtered =  unfilteredList.stream()
+    private Collection<Library> eliminateLibrariesOnUnsupportedPlatforms(Collection<JmePlatform> requiredPlatforms, Collection<Library> unfilteredList){
+        Set<String> platformKeys = new HashSet<>();
+        for(JmePlatform platform : requiredPlatforms){
+            platformKeys.add(platform.name()); // what ideally the data would report as a required platform key
+            platformKeys.add(platform.getAlsoKnownAs()); // what the data actually reports as a required platform key
+        }
+
+        Collection<Library> filtered =  unfilteredList.stream()
                 .filter(l -> {
                     if (l.getRequiredPlatforms().isEmpty()){
                         return true;
                     }else{
-                        return unfilteredList.stream().anyMatch(matching -> l.getRequiredPlatforms().contains(matching.getKey()));
+                        return platformKeys.stream().anyMatch(matching -> l.getRequiredPlatforms().contains(matching));
                     }
 
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         if ( strictValidate && filtered.size() != unfilteredList.size()){
             throw new RuntimeException("Illegal library requested and strictValidate is on");

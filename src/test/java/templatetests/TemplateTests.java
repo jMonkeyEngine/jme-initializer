@@ -2,6 +2,7 @@ package templatetests;
 
 import com.jmonkeyengine.jmeinitializer.InitializerZipService;
 import com.jmonkeyengine.jmeinitializer.deployment.DeploymentOption;
+import com.jmonkeyengine.jmeinitializer.libraries.JmePlatform;
 import com.jmonkeyengine.jmeinitializer.libraries.LibraryService;
 import com.jmonkeyengine.jmeinitializer.versions.VersionService;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
@@ -12,11 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -63,71 +62,62 @@ public class TemplateTests{
     }
 
     @Test
-    public void testMultiProjectTemplate_withTamarin() throws Exception{
-        testTemplate("MultiTamarinTest", "com.example", List.of("JME_DESKTOP", "JME_ANDROID", "JME_EFFECTS", "JME_VR", "MINIE", "TAMARIN" ) );
+    public void testEveryPlatform() throws Exception{
+        testTemplate("MultiTamarinTest", "com.example", List.of(JmePlatform.DESKTOP.name(), JmePlatform.ANDROID.name(), JmePlatform.PC_VR.name(), JmePlatform.ANDROID_VR.name(), "MINIE", "JME_EFFECTS") );
     }
 
     @Test
-    public void testMultiProjectTemplate_withoutTamarin() throws Exception{
-        testTemplate("MultiNoTamarinTest", "com.example", List.of("JME_DESKTOP", "JME_ANDROID", "JME_VR", "JME_EFFECTS",  "MINIE" ) );
+    public void testDesktopVrAndDesktop() throws Exception{
+        testTemplate("MultiTamarinTest", "com.example",  List.of( JmePlatform.DESKTOP.name(), JmePlatform.PC_VR.name(), "JME_EFFECTS", "MINIE" ) );
     }
 
     @Test
-    public void testMultiProject_desktopVr_Template_withTamarin() throws Exception{
-        testTemplate("MultiTamarinTest", "com.example",  List.of( "JME_DESKTOP", "JME_VR", "JME_EFFECTS", "MINIE", "TAMARIN" ) );
-    }
-
-    @Test
-    public void testMultiProject_desktopAndroid_Template() throws Exception{
-        testTemplate("MultiTamarinTest", "com.example",  List.of( "JME_DESKTOP", "JME_ANDROID", "JME_EFFECTS", "MINIE" ) );
+    public void testDesktopAndroid() throws Exception{
+        testTemplate("MultiTamarinTest", "com.example",  List.of( JmePlatform.DESKTOP.name(), JmePlatform.ANDROID.name(), "JME_EFFECTS", "MINIE" ) );
     }
 
 
     @Test
     public void testDesktopTemplate() throws Exception{
-        testTemplate("DesktopTest", "com.example", List.of("JME_DESKTOP", "JME_EFFECTS", "LEMUR" ) );
+        testTemplate("DesktopTest", "com.example", List.of(JmePlatform.DESKTOP.name(), "JME_EFFECTS", "LEMUR" ) );
     }
 
     @Test
     public void testDesktopTemplateWithDeploymentOptions_windows() throws Exception{
-        testTemplate("DesktopTest", "com.example", List.of("JME_DESKTOP", "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.WINDOWS.name()) );
+        testTemplate("DesktopTest", "com.example", List.of(JmePlatform.DESKTOP.name(), "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.WINDOWS.name()) );
     }
 
     @Test
     public void testDesktopTemplateWithDeploymentOptions_linux() throws Exception{
-        testTemplate("DesktopTest", "com.example", List.of("JME_DESKTOP", "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.LINUX.name()) );
+        testTemplate("DesktopTest", "com.example", List.of(JmePlatform.DESKTOP.name(), "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.LINUX.name()) );
     }
 
     @Test
     public void testDesktopTemplateWithDeploymentOptions_macos() throws Exception{
-        testTemplate("DesktopTest", "com.example", List.of("JME_DESKTOP", "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.MACOS.name()) );
+        testTemplate("DesktopTest", "com.example", List.of(JmePlatform.DESKTOP.name(), "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.MACOS.name()) );
     }
 
     @Test
     public void testDesktopTemplateWithDeploymentOptions_all() throws Exception{
-        testTemplate("DesktopTest", "com.example", List.of("JME_DESKTOP", "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.WINDOWS.name(), DeploymentOption.LINUX.name(), DeploymentOption.MACOS.name()) );
+        testTemplate("DesktopTest", "com.example", List.of(JmePlatform.DESKTOP.name(), "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.WINDOWS.name(), DeploymentOption.LINUX.name(), DeploymentOption.MACOS.name()) );
     }
 
     @Test
-    public void testVrTemplateWithDeploymentOptions_all() throws Exception{
-        testTemplate("VrTest", "com.example", List.of("JME_VR", "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.WINDOWS.name(), DeploymentOption.LINUX.name(), DeploymentOption.MACOS.name()) );
+    public void testPcVrTemplateWithDeploymentOptions_all() throws Exception{
+        testTemplate("VrTest", "com.example", List.of(JmePlatform.PC_VR.name(), "JME_EFFECTS", "LEMUR" ), List.of(DeploymentOption.WINDOWS.name(), DeploymentOption.LINUX.name(), DeploymentOption.MACOS.name()) );
+    }
+
+
+    @Test
+    public void testAndroidVr() throws Exception{
+        testTemplate("VrTest", "com.example", List.of(JmePlatform.ANDROID_VR.name(), "JME_EFFECTS") );
     }
 
     @Test
     public void testAndroidTemplate() throws Exception{
-        testTemplate("AndroidTest", "com.example", List.of("JME_ANDROID", "JME_EFFECTS", "MINIE" ) );
+        testTemplate("AndroidTest", "com.example", List.of(JmePlatform.ANDROID.name(), "JME_EFFECTS", "MINIE" ) );
     }
-
-    @Test
-    public void testVrTemplate_withoutTamarin() throws Exception{
-        testTemplate("VrNoTamarinTest", "com.example", List.of("JME_VR", "JME_EFFECTS", "LEMUR") );
-    }
-
-    @Test
-    public void testVrTemplate_withTamarin() throws Exception{
-        testTemplate("VrTamarinTest", "com.example", List.of("JME_VR", "JME_EFFECTS", "TAMARIN", "LEMUR") );
-    }
-
+    
     public static void testTemplate(String gameName, String packageName, List<String> listOfLibraries ) throws Exception{
         testTemplate(gameName, packageName, listOfLibraries, List.of());
     }

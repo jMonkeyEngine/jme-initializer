@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+    id "io.github.0ffz.github-packages" version "1.2.1" // Plugin for anonymous inclusion of artifacts hosted in github package registry
+}
+
+dependencies {
+    api libs.jmeCore
+    runtimeOnly libs.jmeJogg
+    runtimeOnly libs.jmePlugins
+
+    [IF=JME_EFFECTS]api libs.jmeEffects[/IF=JME_EFFECTS]
+    [IF=JME_TERRAIN]api libs.jmeTerrain[/IF=JME_TERRAIN]
+    [IF=JME_NETWORKING]api libs.jmeNetworking[/IF=JME_NETWORKING]
+    [IF=JME_NIFTY]libs.jmeNifty[/IF=JME_NIFTY]
+
+    [IF=PC_VR_OR_ANDROID_VR]api libs.tamarinCore[/IF=PC_VR_OR_ANDROID_VR]
+
+    [ALL_NON_JME_NON_SPECIALISED_DEPENDENCIES]
+}

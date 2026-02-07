@@ -1,0 +1,28 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+subprojects {
+    plugins.withType(JavaPlugin) {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
+        }
+    }
+}
+
+[IF=WINDOWS|LINUX|MACOS]
+task buildAllDistributions {
+    [IF=PC_VR]dependsOn ':pc-vr:buildAllDistributions'[/IF=PC_VR]
+    [IF=DESKTOP]dependsOn ':desktop:buildAllDistributions'[/IF=DESKTOP]
+
+    doLast {
+        println(" #### Check the individual modules build/distributions folders for distributable zips etc #### ")
+    }
+}
+[/IF=WINDOWS|LINUX|MACOS]

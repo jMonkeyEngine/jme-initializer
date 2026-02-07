@@ -1,0 +1,77 @@
+plugins {
+    id 'application'
+    id "de.undercouch.download" version "5.1.0"
+    id "io.github.0ffz.github-packages" version "1.2.1" // Plugin for anonymous inclusion of artifacts hosted in github package registry
+}
+
+group '[GAME_PACKAGE]'
+version '1.0.0'
+mainClassName = '[GAME_PACKAGE].pcvr.VrLauncher'
+String dependenciesString = ""
+
+dependencies {
+    implementation project(path: ':game')
+    implementation libs.jmeDesktop
+    implementation libs.jmeLwjgl3
+    implementation libs.tamarinPcVr
+
+    [VR_SPECIALISED_DEPENDENCIES]
+}
+task copyJars(type: Copy) {
+    from (sourceSets.main.runtimeClasspath){
+        include '**/*.jar'
+    }
+    from(sourceSets.main.compileClasspath){
+        include '**/*.jar'
+    }
+    into('build/libs/dependencies')
+    includeEmptyDirs = false
+    setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+}
+/**
+ * Better approach described below, but the 2 of them are vial ones
+ */
+task createJar(type : Jar, dependsOn : copyJars){
+    //get the copied jars
+    final String project = rootDir.getPath()
+    final File dependencies = new File(project + "/desktop/build/libs/dependencies/")
+    if(dependencies.exists()) {
+        if (dependencies.listFiles().length > 0) {
+            final File[] files = dependencies.listFiles()
+            for (int i = 0; i < files.length; i++) {
+                final String fileName = files[i].getName()
+                if (fileName.contains(".jar")) {
+                    dependenciesString += "dependencies/" + fileName + " "
+                }
+            }
+        }
+    }
+    manifest{
+        attributes('Main-Class': mainClassName)
+        //pass the jars to the manifest
+        attributes('Class-Path' : dependenciesString)
+        attributes('Created-By' : 'Jme3-Gradle')
+    }
+    with jar
+}
+/**
+ * A Suggestion of better code by : Mikhail Bobrutskov (aka wizzardo)
+ */
+task releaseJar(type: Jar, dependsOn: copyJars) {
+    manifest {
+        attributes("Main-Class": mainClassName,
+                "Class-Path": sourceSets.main.runtimeClasspath.filter {it.isFile() }.collect { "dependencies/${it.name}" }.join(' '))
+    }
+    //tag the jar task to inject this task into it
+    with jar
+}
+
+distZip {
+    //having a degenerate folder within the dist zip complicates generating the other zips
+    eachFile { file ->
+        String path = file.relativePath
+        file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
+    }
+    includeEmptyDirs(false)
+}
+[FRAGMENT=gradleDeployment.fragment]

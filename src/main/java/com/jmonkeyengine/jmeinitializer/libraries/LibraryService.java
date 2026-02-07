@@ -9,6 +9,7 @@ import com.jmonkeyengine.jmeinitializer.dto.DeploymentOptionDto;
 import com.jmonkeyengine.jmeinitializer.uisupport.CategoryAndLibrariesDto;
 import com.jmonkeyengine.jmeinitializer.uisupport.CategoryDto;
 import com.jmonkeyengine.jmeinitializer.uisupport.LibraryDto;
+import com.jmonkeyengine.jmeinitializer.uisupport.PlatformDto;
 import com.jmonkeyengine.jmeinitializer.uisupport.UiLibraryDataDto;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -28,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,9 +37,14 @@ import java.util.stream.Stream;
 @Log4j2
 public class LibraryService {
 
-    public static final String JME_DESKTOP = "JME_DESKTOP";
-    public static final String JME_VR = "JME_VR";
-    public static final String JME_ANDROID = "JME_ANDROID";
+    /**
+     * Libraries the initialiser should never show as options
+     * (Usually because they have been put into the templates in
+     * annother way)
+     */
+    private static final Set<String> SUPPRESSED_LIBRARIES = Set.of(
+            "TAMARIN" //is handled within the VR templates
+    );
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -93,6 +100,10 @@ public class LibraryService {
                 //at present the data we're getting is just claiming that specialisedToPlatforms are required platforms (which is breaking Tamarin)
                 library.setSpecialisedToPlatforms(
                         Stream.concat(library.getSpecialisedToPlatforms().stream(), library.getRequiredPlatforms().stream()).collect(Collectors.toList()));
+                if(SUPPRESSED_LIBRARIES.contains(library.getKey())){
+                    library.setCategory(LibraryCategory.HIDDEN);
+                }
+
                 newAvailableLibraries.put(library.getKey(), library);
             }
         } catch(JsonProcessingException e){
@@ -101,9 +112,21 @@ public class LibraryService {
         }
 
         Multimap<LibraryCategory, Library> newAvailableLibraryByCategory = ArrayListMultimap.create();
-        newAvailableLibraries.values().forEach(l -> newAvailableLibraryByCategory.put(l.getCategory(), l));
-        List<Library> newNonJmeLibraries = newAvailableLibraryByCategory.values().stream().filter(l -> !l.isUsesJmeVersion()).collect(Collectors.toList());
-        List<Library> newJmeLibraries = newAvailableLibraryByCategory.values().stream().filter(Library::isUsesJmeVersion).collect(Collectors.toList());
+        newAvailableLibraries
+                .values()
+                .stream()
+                .forEach(l -> newAvailableLibraryByCategory.put(l.getCategory(), l));
+        List<Library> newNonJmeLibraries = newAvailableLibraryByCategory
+                .values()
+                .stream()
+                .filter(l -> !l.isUsesJmeVersion())
+
+                .collect(Collectors.toList());
+        List<Library> newJmeLibraries = newAvailableLibraryByCategory
+                .values()
+                .stream()
+                .filter(Library::isUsesJmeVersion)
+                .collect(Collectors.toList());
 
         //I don't think it matters if stale data is briefly presented, but do the swap over quickly nonetheless
         currentAvailableLibraries = newAvailableLibraries;
@@ -129,11 +152,19 @@ public class LibraryService {
         //don't present empty categories to the UI for rendering. This is for graceful upgrades with new categories or removal of old categories
         specialCategories.removeIf(c -> c.getLibraries().isEmpty());
 
+        List<PlatformDto> platforms = Stream.of(JmePlatform.values())
+                .map(p ->
+                    new PlatformDto(
+                            p.name(),
+                            p.getHumanReadableName(),
+                            p.getDescriptionText(),
+                            p == JmePlatform.DESKTOP)
+                ).toList();
+
         uiLibraryDataDto = new UiLibraryDataDto(
-                librariesOfCategory(LibraryCategory.JME_PLATFORM).stream().map(l -> LibraryDto.libraryDtoFromLibrary(l, allPlatformKeys, allDeploymentKeys)).collect(Collectors.toList()),
+                platforms,
                 DeploymentOptionDto.wrapAsDto(DeploymentOption.values()),
-                specialCategories,
-                JME_DESKTOP
+                specialCategories
         );
     }
 
