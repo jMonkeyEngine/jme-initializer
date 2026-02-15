@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace "[GAME_PACKAGE].vr.[GAME_NAME]"
+    namespace "[GAME_PACKAGE].vr"
     compileSdk 36
 
     defaultConfig {
-        applicationId "[GAME_PACKAGE].vr.[GAME_NAME]"
+        applicationId "[GAME_PACKAGE].vr"
         minSdk 28
         targetSdk 36
         versionCode 1
@@ -22,10 +22,6 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
     }
     configurations.all {
         exclude group:"org.jmonkeyengine",module:"jme3-desktop"

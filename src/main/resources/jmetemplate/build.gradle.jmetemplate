@@ -4,16 +4,33 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
+
+
 subprojects {
+    ext {
+        [IF=ANDROID_OR_ANDROID_VR]JAVA_VERSION = 11[/IF=ANDROID_OR_ANDROID_VR]
+        [NOT=ANDROID_OR_ANDROID_VR]JAVA_VERSION = 21[/NOT=ANDROID_OR_ANDROID_VR]
+    }
+
     plugins.withType(JavaPlugin) {
         java {
             toolchain {
-                languageVersion = JavaLanguageVersion.of(21)
+                languageVersion = JavaLanguageVersion.of(JAVA_VERSION)
             }
-            sourceCompatibility = JavaVersion.VERSION_21
-            targetCompatibility = JavaVersion.VERSION_21
+            sourceCompatibility = JavaVersion.toVersion(JAVA_VERSION)
+            targetCompatibility = JavaVersion.toVersion(JAVA_VERSION)
         }
     }
+    [IF=ANDROID_OR_ANDROID_VR]
+    plugins.withId('com.android.application') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.toVersion(JAVA_VERSION)
+                targetCompatibility JavaVersion.toVersion(JAVA_VERSION)
+            }
+        }
+    }
+    [/IF=ANDROID_OR_ANDROID_VR]
 }
 
 [IF=WINDOWS|LINUX|MACOS]
