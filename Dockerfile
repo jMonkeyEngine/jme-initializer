@@ -1,4 +1,4 @@
-FROM openjdk:17
+FROM azul/zulu-openjdk:17-latest
 
 # this is so that app itself can run as something with very few permissions
 RUN groupadd --gid 1000 nonroot
