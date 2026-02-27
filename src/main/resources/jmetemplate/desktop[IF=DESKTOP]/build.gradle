@@ -1,0 +1,32 @@
+plugins {
+    id 'application'
+    id "de.undercouch.download" version "5.1.0"
+    id "io.github.0ffz.github-packages" version "1.2.1" // Plugin for anonymous inclusion of artifacts hosted in github package registry
+}
+
+group '[GAME_PACKAGE]'
+version '1.0.0'
+mainClassName = '[GAME_PACKAGE].desktopmodule.DesktopLauncher'
+String dependenciesString = ""
+
+application {
+    if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+        applicationDefaultJvmArgs = ['-XstartOnFirstThread'] // this is when using a Mac as a development machine which requires the AppKit main UI thread to be used for GUI applications
+    }
+}
+
+dependencies {
+    implementation project(path: ':game')
+    implementation libs.jmeDesktop
+    implementation libs.jmeLwjgl3
+    [DESKTOP_SPECIALISED_DEPENDENCIES]
+}
+distZip {
+    //having a degenerate folder within the dist zip complicates generating the other zips
+    eachFile { file ->
+        String path = file.relativePath
+        file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
+    }
+    includeEmptyDirs(false)
+}
+[FRAGMENT=gradleDeployment.fragment]

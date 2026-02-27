@@ -1,5 +1,6 @@
 package com.jmonkeyengine.jmeinitializer.deployment;
 
+import com.jmonkeyengine.jmeinitializer.libraries.JmePlatform;
 import com.jmonkeyengine.jmeinitializer.libraries.LibraryService;
 import lombok.Getter;
 
@@ -9,9 +10,9 @@ import java.util.List;
 
 @Getter
 public enum DeploymentOption{
-    WINDOWS("Windows", LibraryService.JME_DESKTOP, LibraryService.JME_VR),
-    LINUX("Linux", LibraryService.JME_DESKTOP, LibraryService.JME_VR),
-    MACOS("MacOs", LibraryService.JME_DESKTOP, LibraryService.JME_VR);
+    WINDOWS("Windows", JmePlatform.DESKTOP, JmePlatform.PC_VR),
+    LINUX("Linux", JmePlatform.DESKTOP, JmePlatform.PC_VR),
+    MACOS("MacOs", JmePlatform.DESKTOP, JmePlatform.PC_VR);
 
     /**
      * The human-readable name
@@ -20,9 +21,9 @@ public enum DeploymentOption{
 
     List<String> relevantToPlatforms;
 
-    DeploymentOption(String optionName, String... relevantToPlatforms){
+    DeploymentOption(String optionName, JmePlatform... relevantToPlatforms){
         this.optionName = optionName;
-        this.relevantToPlatforms = Arrays.asList(relevantToPlatforms);
+        this.relevantToPlatforms = Arrays.stream(relevantToPlatforms).map(Enum::name).toList();
     }
 
     public static List<DeploymentOption> valuesOf(List<String> names){

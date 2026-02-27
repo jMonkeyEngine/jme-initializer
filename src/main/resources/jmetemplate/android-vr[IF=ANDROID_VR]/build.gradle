@@ -1,0 +1,46 @@
+plugins {
+    alias(libs.plugins.android.application)
+    id "io.github.0ffz.github-packages" version "1.2.1" // Plugin for anonymous inclusion of artifacts hosted in github package registry
+}
+
+android {
+    namespace "[GAME_PACKAGE].vr"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "[GAME_PACKAGE].vr"
+        minSdk 28
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    configurations.all {
+        exclude group:"org.jmonkeyengine",module:"jme3-desktop"
+    }
+}
+
+dependencies {
+    implementation project(path: ':game')
+
+    implementation libs.androidxAppcompat
+    implementation libs.googleMaterial
+    implementation libs.androidxConstraintlayout
+    testImplementation libs.junit4
+    androidTestImplementation libs.androidxTestExtJunit
+    androidTestImplementation libs.androidxTestEspressoCore
+
+    implementation libs.jmeAndroid
+    implementation libs.jmeAndroidNative
+
+    implementation libs.tamarinAndroid
+    [ANDROID_SPECIALISED_DEPENDENCIES]
+}

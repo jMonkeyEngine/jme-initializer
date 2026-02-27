@@ -75,16 +75,24 @@ public enum MergeField {
     DESKTOP_SPECIALISED_DEPENDENCIES,
 
     /**
-     * This is everything that is not a jmonkey version library (it will include specialised libraries and probably
-     * should not be used on multi module projects
-     */
-    ALL_NON_JME_DEPENDENCIES,
-
-    /**
      * This is all non jmonkey libraries that are not specialised. I.e. in multimodule projects they go in the
      * game module (not for example the android module).
      */
     ALL_NON_JME_NON_SPECIALISED_DEPENDENCIES,
+
+    /**
+     * this is a series of variables for use in the toml file.
+     * <p>
+     * e.g.tamarin = "3.0.2"
+     * </p>
+     */
+    ALL_NON_JME_VERSION_REFERENCES,
+
+    /**
+     * this is a series of variables for use in the toml file.
+     *
+     */
+    ALL_NON_JME_TOML_LIBRARY_REFERENCES,
 
     /**
      * Maven repos required by the libraries. E.g. jcenter()
@@ -93,7 +101,11 @@ public enum MergeField {
      */
     MAVEN_REPOS,
 
-    CSV_LIBRARIES
+    /**
+     * Because tamarin is used in the templates itself it is handled seperately from the other non JME libraries
+     */
+    TAMARIN_VERSION
+
     ;
 
     /**

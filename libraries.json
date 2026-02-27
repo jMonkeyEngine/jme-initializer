@@ -104,7 +104,7 @@
   {
     "key": "TAMARIN",
     "displayName": "Tamarin",
-    "category" : "GENERAL",
+    "category" : "HIDDEN",
     "descriptionText" : "A virtual reality support library, providing VR hands & action based openVr",
     "defaultSelected" : true,
     "usesJmeVersion" : false,

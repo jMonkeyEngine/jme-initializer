@@ -1,0 +1,55 @@
+[versions]
+jme = "[JME_VERSION]"
+[IF=PC_VR_OR_ANDROID_VR]
+tamarin = "[TAMARIN_VERSION]"
+[/IF=PC_VR_OR_ANDROID_VR]
+[IF=ANDROID_OR_ANDROID_VR]
+androidApplication = "8.12.0"
+[/IF=ANDROID_OR_ANDROID_VR]
+appcompat = "1.4.0"
+googleMaterial = "1.4.0"
+constraintlayout = "2.1.1"
+junit4 = "4.13.2"
+androidxTestJunit = "1.1.3"
+espressoCore = "3.4.0"
+
+[ALL_NON_JME_VERSION_REFERENCES]
+
+[plugins]
+[IF=ANDROID_OR_ANDROID_VR]
+android-application = { id = "com.android.application", version.ref = "androidApplication" }
+[/IF=ANDROID_OR_ANDROID_VR]
+
+[libraries]
+jmeCore = { module = "org.jmonkeyengine:jme3-core", version.ref = "jme" }
+jmeJogg = { module = "org.jmonkeyengine:jme3-jogg", version.ref = "jme" }
+jmePlugins = { module = "org.jmonkeyengine:jme3-plugins", version.ref = "jme" }
+jmeDesktop = { module = "org.jmonkeyengine:jme3-desktop", version.ref = "jme" }
+jmeEffects = { module = "org.jmonkeyengine:jme3-effects", version.ref = "jme" }
+jmeLwjgl3 = { module = "org.jmonkeyengine:jme3-lwjgl3", version.ref = "jme" }
+jmeTerrain = { module = "org.jmonkeyengine:jme3-terrain", version.ref = "jme" }
+jmeNetworking = { module = "org.jmonkeyengine:jme3-networking", version.ref = "jme" }
+jmeNifty = { module = "org.jmonkeyengine:jme3-niftygui", version.ref = "jme" }
+jmeAndroid = { module = "org.jmonkeyengine:jme3-android", version.ref = "jme" }
+jmeAndroidNative = { module = "org.jmonkeyengine:jme3-android-native", version.ref = "jme" }
+
+[IF=ANDROID_OR_ANDROID_VR]
+androidxAppcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+googleMaterial = { module = "com.google.android.material:material", version.ref = "googleMaterial" }
+androidxConstraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+androidxTestExtJunit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
+androidxTestEspressoCore = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
+[/IF=ANDROID_OR_ANDROID_VR]
+
+[IF=PC_VR_OR_ANDROID_VR]
+tamarinCore = { module = "com.onemillionworlds:tamarin-core", version.ref = "tamarin" }
+[/IF=PC_VR_OR_ANDROID_VR]
+[IF=PC_VR]
+tamarinPcVr = { module = "com.onemillionworlds:tamarin", version.ref = "tamarin" }
+[/IF=PC_VR]
+[IF=ANDROID_VR]
+tamarinAndroid =  { module = "com.onemillionworlds:tamarin-android", version.ref = "tamarin" }
+[/IF=ANDROID_VR]
+
+[ALL_NON_JME_TOML_LIBRARY_REFERENCES]

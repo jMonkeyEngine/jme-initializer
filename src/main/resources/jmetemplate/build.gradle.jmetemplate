@@ -1,0 +1,45 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+
+
+subprojects {
+    ext {
+        [IF=ANDROID_OR_ANDROID_VR]JAVA_VERSION = 11[/IF=ANDROID_OR_ANDROID_VR]
+        [NOT=ANDROID_OR_ANDROID_VR]JAVA_VERSION = 21[/NOT=ANDROID_OR_ANDROID_VR]
+    }
+
+    plugins.withType(JavaPlugin) {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(JAVA_VERSION)
+            }
+            sourceCompatibility = JavaVersion.toVersion(JAVA_VERSION)
+            targetCompatibility = JavaVersion.toVersion(JAVA_VERSION)
+        }
+    }
+    [IF=ANDROID_OR_ANDROID_VR]
+    plugins.withId('com.android.application') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.toVersion(JAVA_VERSION)
+                targetCompatibility JavaVersion.toVersion(JAVA_VERSION)
+            }
+        }
+    }
+    [/IF=ANDROID_OR_ANDROID_VR]
+}
+
+[IF=WINDOWS|LINUX|MACOS]
+task buildAllDistributions {
+    [IF=PC_VR]dependsOn ':pc-vr:buildAllDistributions'[/IF=PC_VR]
+    [IF=DESKTOP]dependsOn ':desktop:buildAllDistributions'[/IF=DESKTOP]
+
+    doLast {
+        println(" #### Check the individual modules build/distributions folders for distributable zips etc #### ")
+    }
+}
+[/IF=WINDOWS|LINUX|MACOS]
